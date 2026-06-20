@@ -10,41 +10,41 @@ class CodeCleaner:
     file_path: str
 
     def clean_code(self) -> str:
-        with open(self.file_path, 'r') as file:
-            tree = ast.parse(file.read())
-            cleaned_code = ast.unparse(tree)
-            # Ensure trailing newline is preserved
-            if not cleaned_code.endswith('\n'):
-                cleaned_code += '\n'
-            return cleaned_code
+        try:
+            with open(self.file_path, 'r') as file:
+                tree = ast.parse(file.read())
+                cleaned_code = ast.unparse(tree)
+                return cleaned_code
+        except FileNotFoundError:
+            raise ValueError(f"File {self.file_path} not found")
+        except SyntaxError:
+            raise ValueError(f"Invalid syntax in file {self.file_path}")
 
-    def get_changes(self, original_code: str, cleaned_code: str) -> List[str]:
+    def get_changes(self, original_code: str, cleaned_code: str) -> str:
         changes = []
-        original_lines = original_code.splitlines()
-        cleaned_lines = cleaned_code.splitlines()
-        for i in range(max(len(original_lines), len(cleaned_lines))):
-            if i >= len(original_lines):
-                changes.append(f'+ {cleaned_lines[i]}')
-            elif i >= len(cleaned_lines):
-                changes.append(f'- {original_lines[i]}')
-            elif original_lines[i] != cleaned_lines[i]:
-                changes.append(f'- {original_lines[i]}')
-                changes.append(f'+ {cleaned_lines[i]}')
-        return changes
+        for line in original_code.splitlines():
+            if line not in cleaned_code.splitlines():
+                changes.append(f"- {line}")
+        for line in cleaned_code.splitlines():
+            if line not in original_code.splitlines():
+                changes.append(f"+ {line}")
+        return "\n".join(changes)
 
 def main():
-    parser = argparse.ArgumentParser(description='Code Cleanser')
-    parser.add_argument('file_path', help='Path to the file or directory to clean')
+    parser = argparse.ArgumentParser(description="Code Cleanser")
+    parser.add_argument("file_path", help="Path to the file or directory to clean")
     args = parser.parse_args()
     cleaner = CodeCleaner(args.file_path)
-    original_code = open(args.file_path, 'r').read()
-    cleaned_code = cleaner.clean_code()
-    changes = cleaner.get_changes(original_code, cleaned_code)
-    print('Cleaned Code:')
-    print(cleaned_code)
-    print('Changes:')
-    for change in changes:
-        print(change)
+    try:
+        original_code = open(args.file_path, 'r').read()
+        cleaned_code = cleaner.clean_code()
+        changes = cleaner.get_changes(original_code, cleaned_code)
+        print("Cleaned Code:")
+        print(cleaned_code)
+        print("\nChanges:")
+        print(changes)
+    except ValueError as e:
+        print(f"Error: {e}")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
