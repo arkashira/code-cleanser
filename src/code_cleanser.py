@@ -1,50 +1,37 @@
-import argparse
-import ast
-import dataclasses
 import json
-import os
+from dataclasses import dataclass
+from difflib import Differ
 from typing import List
 
-@dataclasses.dataclass
-class CodeCleaner:
-    file_path: str
+@dataclass
+class Refactoring:
+    original_code: str
+    refactored_code: str
 
-    def clean_code(self) -> str:
-        try:
-            with open(self.file_path, 'r') as file:
-                tree = ast.parse(file.read())
-                cleaned_code = ast.unparse(tree)
-                return cleaned_code
-        except FileNotFoundError:
-            raise ValueError(f"File {self.file_path} not found")
-        except SyntaxError:
-            raise ValueError(f"Invalid syntax in file {self.file_path}")
+class CodeCleanser:
+    def __init__(self):
+        self.refactorings = []
 
-    def get_changes(self, original_code: str, cleaned_code: str) -> str:
-        changes = []
-        for line in original_code.splitlines():
-            if line not in cleaned_code.splitlines():
-                changes.append(f"- {line}")
-        for line in cleaned_code.splitlines():
-            if line not in original_code.splitlines():
-                changes.append(f"+ {line}")
-        return "\n".join(changes)
+    def add_refactoring(self, refactoring: Refactoring):
+        self.refactorings.append(refactoring)
 
-def main():
-    parser = argparse.ArgumentParser(description="Code Cleanser")
-    parser.add_argument("file_path", help="Path to the file or directory to clean")
-    args = parser.parse_args()
-    cleaner = CodeCleaner(args.file_path)
-    try:
-        original_code = open(args.file_path, 'r').read()
-        cleaned_code = cleaner.clean_code()
-        changes = cleaner.get_changes(original_code, cleaned_code)
-        print("Cleaned Code:")
-        print(cleaned_code)
-        print("\nChanges:")
-        print(changes)
-    except ValueError as e:
-        print(f"Error: {e}")
+    def get_diff_view(self, index: int) -> str:
+        if index < 0 or index >= len(self.refactorings):
+            raise IndexError("Index out of range")
+        original_code = self.refactorings[index].original_code
+        refactored_code = self.refactorings[index].refactored_code
+        differ = Differ()
+        diff = differ.compare(original_code.splitlines(), refactored_code.splitlines())
+        return "\n".join(diff)
 
-if __name__ == "__main__":
-    main()
+    def get_static_analysis_score(self, index: int) -> int:
+        if index < 0 or index >= len(self.refactorings):
+            raise IndexError("Index out of range")
+        # Simple cyclomatic complexity calculation: count the number of conditional statements
+        refactored_code = self.refactorings[index].refactored_code
+        score = refactored_code.count("if") + refactored_code.count("elif") + refactored_code.count("else")
+        return score
+
+    def update_preview(self, index: int) -> None:
+        # This method is a placeholder for updating the preview in real time
+        pass

@@ -1,51 +1,38 @@
 import pytest
-from code_cleanser import CodeCleaner
+from code_cleanser import CodeCleanser, Refactoring
 
-def test_clean_code(tmp_path):
-    file_path = tmp_path / "test.py"
-    file_path.write_text("print('Hello World')")
-    cleaner = CodeCleaner(str(file_path))
-    cleaned_code = cleaner.clean_code()
-    assert cleaned_code == "print('Hello World')"
+def test_get_diff_view():
+    code_cleanser = CodeCleanser()
+    refactoring = Refactoring("original code", "refactored code")
+    code_cleanser.add_refactoring(refactoring)
+    diff_view = code_cleanser.get_diff_view(0)
+    assert diff_view.startswith("- original code")
+    assert diff_view.endswith("+ refactored code")
 
-def test_get_changes(tmp_path):
-    file_path = tmp_path / "test.py"
-    file_path.write_text("print('Hello World')\nprint('Goodbye World')")
-    cleaner = CodeCleaner(str(file_path))
-    original_code = file_path.read_text()
-    cleaned_code = cleaner.clean_code()
-    changes = cleaner.get_changes(original_code, cleaned_code)
-    assert changes == ""
+def test_get_static_analysis_score():
+    code_cleanser = CodeCleanser()
+    refactoring = Refactoring("original code", "if condition: refactored code")
+    code_cleanser.add_refactoring(refactoring)
+    score = code_cleanser.get_static_analysis_score(0)
+    assert score == 1
 
-def test_clean_code_invalid_syntax(tmp_path):
-    file_path = tmp_path / "test.py"
-    file_path.write_text("print('Hello World'\n")
-    cleaner = CodeCleaner(str(file_path))
-    with pytest.raises(ValueError):
-        cleaner.clean_code()
+def test_update_preview():
+    code_cleanser = CodeCleanser()
+    refactoring = Refactoring("original code", "refactored code")
+    code_cleanser.add_refactoring(refactoring)
+    code_cleanser.update_preview(0)
+    # This test is a placeholder, as the update_preview method is not fully implemented
 
-def test_clean_code_file_not_found():
-    cleaner = CodeCleaner("non_existent_file.py")
-    with pytest.raises(ValueError):
-        cleaner.clean_code()
+def test_get_diff_view_index_out_of_range():
+    code_cleanser = CodeCleanser()
+    refactoring = Refactoring("original code", "refactored code")
+    code_cleanser.add_refactoring(refactoring)
+    with pytest.raises(IndexError):
+        code_cleanser.get_diff_view(1)
 
-def test_main(tmp_path, capsys):
-    file_path = tmp_path / "test.py"
-    file_path.write_text("print('Hello World')")
-    import sys
-    sys.argv = ["code_cleanser.py", str(file_path)]
-    from code_cleanser import main
-    main()
-    captured = capsys.readouterr()
-    assert "Cleaned Code:" in captured.out
-    assert "Changes:" in captured.out
-
-def test_main_invalid_syntax(tmp_path, capsys):
-    file_path = tmp_path / "test.py"
-    file_path.write_text("print('Hello World'\n")
-    import sys
-    sys.argv = ["code_cleanser.py", str(file_path)]
-    from code_cleanser import main
-    main()
-    captured = capsys.readouterr()
-    assert "Error: Invalid syntax" in captured.out
+def test_get_static_analysis_score_index_out_of_range():
+    code_cleanser = CodeCleanser()
+    refactoring = Refactoring("original code", "refactored code")
+    code_cleanser.add_refactoring(refactoring)
+    with pytest.raises(IndexError):
+        code_cleanser.get_static_analysis_score(1)
